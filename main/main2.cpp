@@ -12,15 +12,16 @@ Lista<int> ordenamientoTopologico(Grafo<int>);
 Lista<char> ordenamientoTopologico(Grafo<char>);
 
 int main(){	
-	Grafo<int> g, g2;
+	Grafo<string> g, g2;
 	float costo;
-	
+
 	//lectura formato arco (a b)
-	int vertice1, vertice2;
+	string vertice1, vertice2;
 	while(cin >> vertice1){
 		cin.get();
 		cin >> vertice2;
-		g.agregarArco(vertice1, vertice2);
+		cin >> costo;
+		g.agregarArco(vertice1, vertice2, costo);
 	}
 	g.modIds();
 
@@ -40,8 +41,8 @@ int main(){
 	cout << "Lista de vertices sumideros del grafo 1:" << endl << g.sumideros() << endl << endl;
 	cout << "numero de vertices del grafo: " << g.orden() << endl;
 	
-	int v;
-	Lista<int> l = g.listaVertices();
+	string v;
+	Lista<string> l = g.listaVertices();
 	while(!l.esVacia()){
 		v = l.consultar(1);
 		l.eliminar(1);
@@ -62,8 +63,8 @@ int main(){
 		cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << endl;
 	}
 	
-	v = 1;
-	int w = 8;
+	v = "ciudad1";
+	string w = "ciudad5";
 	
 	if(g.existeVertice(v)) cout << "El vertice " << v << " esta en el arco" << endl;
 	else cout << "El vertice " << v << " no esta en el arco" << endl;
@@ -82,17 +83,19 @@ int main(){
 	if(g.adyacentes(w, v)) cout << "Existe adyacencia entre " << w << " y " << v << endl;
 	else cout << "No existe adyacencia entre " << w << " y " << v << "\n" << endl;
 	
-	// cout << "Camino mas corto entre " << v << " y " << w << "(Grafo 1):\n" << g.camino(v, w) << endl << endl;
+	if(g.esHamiltoniano()) cout << "El grafo es hamiltoniano" << endl;
+	else cout << "El grafo no es hamiltoniano" << endl;
+
+	cout << "Camino mas corto entre " << v << " y " << w << "(Grafo 1):\n" << g.camino(v, w) << endl << endl;
 	// cout << "Camino mas corto entre " << v << " y " << w << "(Grafo 2):\n" << g2.camino(v, w) << endl;
-	Lista<int> caca = ordenamientoTopologico(g);
-	cout << "Ordenamiento Topologico del grafo: \n" << caca << endl;
+	//~ Lista<int> caca = ordenamientoTopologico(g);
+	//~ cout << "Ordenamiento Topologico del grafo: \n" << caca << endl;
 	
-	int x = 1;
+	string x = "ciudad1";
 	cout << "\n---RECORRIDO BFS (Vi=" << x << ")----------" << endl;
 	g.BFS(x);
 	cout << "\n\n";
 	cout << "---RECORRIDO DFS----------" << endl;
-	x = 1;
 	g.DFS();
 	return(0);
 }

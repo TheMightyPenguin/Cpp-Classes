@@ -2,14 +2,14 @@
 
 #Variables
 CC = g++
-NAME = main
+NAME = main2
 
 #Instrucciones
 all:
 	$(CC) $(NAME).cpp -o $(NAME)
 	
 run:
-	$(NAME).exe < entrada.in
+	$(NAME).exe < entrada2.in
 
 clean:
 	rm $(NAME)

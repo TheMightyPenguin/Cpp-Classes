@@ -300,6 +300,7 @@ Lista<T>::~Lista(){
 		this->pri = this->pri->obtSig();
 		delete(act);
 	}
+	this->pri = 0;
 	this->ult = 0;
 	this->tam = 0;
 }

@@ -12,6 +12,8 @@
 #include "../Cola/Cola.hpp"
 #include "../Pila/Pila.hpp"
 
+const bool verbose = true;
+
 template <class T, class C = float>
 class Grafo{
 protected:
@@ -20,15 +22,19 @@ protected:
 
 protected:
 	//Metodos Auxiliares
+	bool esHamiltoniano(int, bool*, Lista<int>&) const;
 	NodoV<T,C>* agregarAlFinal(const T&);
 	void eliminarTodosArcos(NodoV<T,C>*);
 	void eliminarArcoDe(const T&, NodoV<T,C>*);
-	void ubicarAmbos(const T&, const T&, NodoV<T,C>*&, NodoV<T,C>*&);
+	void ubicarAmbos(const T&, const T&, NodoV<T,C>*&, NodoV<T,C>*&) const;
 	NodoV<T,C>* ubicar(const T&) const;
-	NodoA<T,C>* ubicar(NodoA<T,C> *actW, const T &w) const;
+	NodoV<T,C>* ubicarPorId(int) const;
+	NodoA<T,C>* ubicar(NodoA<T,C>*, const T&) const;
+	NodoA<T,C>* ubicarPorId(NodoA<T,C>*, int) const;
 	void copiarVertices(const Grafo<T,C>&);
 	void copiarArcos(const Grafo<T,C>&);
-	T distanciaMin(Lista<T>&, int*) const;
+	int distanciaMin(Lista<int>&, int*) const;
+	T* obtNombres() const;
 	
 public:
 	//Constructores
@@ -36,12 +42,14 @@ public:
 	inline Grafo(const Grafo<T,C> &g2): g(0), fin(0){ *this = g2; }
 	
 	//Observadores
+	bool esHamiltoniano() const;
 	inline bool esVacio() const{ return(!g); }
 	inline int orden() const{ return(vertices); }
 	inline int nArcos() const{ return(arcos); }
 	bool existeVertice(const T&) const;
 	bool existeArco(const T&, const T&) const;
 	C costoArco(const T&, const T&) const;
+	C costoArcoPorId(int, int) const;
 	bool esFuente(const T&) const;
 	bool esSumidero(const T&) const;
 	bool estaAislado(const T&) const;
@@ -51,9 +59,11 @@ public:
 	int gradoInterior(const T&) const;
 	int gradoExterior(const T&) const;
 	int grado(const T&) const;
-	bool adyacentes(const T&, const T&);
+	bool adyacentes(const T&, const T&) const;
+	bool adyacentesPorId(const T&, const T&) const;
 	Lista<T> listaVertices() const;
 	Lista<T> sucesores(const T&) const;
+	Lista<int> sucesoresPorId(int) const;
 	Lista<T> predecesores(const T&) const;
 	Lista<T> fuentes() const;
 	Lista<T> sumideros() const;
@@ -61,11 +71,11 @@ public:
 	Lista<T> camino(const T&, const T&) const;
 	bool igual(const Grafo<T,C>&) const;
 	bool obtMarca(const T&) const;
-	void BFS(const T&, T*, T*);
+	int obtId(const T&) const;
+	void BFS(int, int*, int*);
 	void BFS(const T&);	
 	void DFS();
-	void DFS(const T, T*, T*, T*, std::string*, int&);
-	bool esArborescencia();
+	void DFS(int, int*, int*, int*, std::string*, int&);
 	
 	//Modificadores
 	void agregarVertice(const T&);
@@ -76,6 +86,7 @@ public:
 	void marcar(const T&);
 	void desmarcar(const T&);
 	void copiar(const Grafo<T,C>&);
+	void modIds();
 	
 	//Operadores
 	Grafo<T,C>& operator = (const Grafo<T,C>&);
@@ -95,6 +106,51 @@ public:
 
 
 /**Observadores**/
+template <class T, class C>
+bool Grafo<T,C>::esHamiltoniano() const{
+	Lista<T> l = listaVertices();
+	Lista<int> recorrido;
+	int v;
+	bool* visitados = new bool[vertices];
+	for(int i = 0; i < vertices; i++){
+		visitados[i] = false;
+	}
+	while(!l.esVacia()){
+		v = obtId(l.consultar(1));
+		l.eliminar(1);
+		if(!visitados[v]){
+			if(esHamiltoniano(v, visitados, recorrido)){
+				return(true);
+			}
+		}
+		std::cout << recorrido << std::endl;
+		recorrido.nulo();
+	}
+	return(false);
+}
+
+template <class T, class C>
+bool Grafo<T,C>::esHamiltoniano(int v, bool *visitados, Lista<int> &recorrido) const{
+	Lista<int> s = sucesoresPorId(v);
+	int u, pos;
+	recorrido.insertar(v, recorrido.longitud() + 1);
+	pos = recorrido.longitud();
+	visitados[v] = true;
+	while(!s.esVacia()){
+		u = s.consultar(1);
+		s.eliminar(1);
+		if(!visitados[u]){
+			esHamiltoniano(u, visitados, recorrido);
+		}
+	}
+	if(recorrido.longitud() == vertices){
+		return(true);
+	}
+	recorrido.eliminar(pos);
+	visitados[v] = false;
+	return(false);
+}
+
 template <class T, class C>
 bool Grafo<T,C>::existeVertice(const T &v) const{
 	NodoV<T,C> *actV;
@@ -129,9 +185,23 @@ C Grafo<T,C>::costoArco(const T &v, const T &w) const{
 }
 
 template <class T, class C>
+C Grafo<T,C>::costoArcoPorId(int v, int w) const{
+	NodoV<T,C> *actV;
+	NodoA<T,C> *actW;
+	actV = this->ubicarPorId(v);
+	if(actV){
+		actW = this->ubicarPorId(actV->obtPri(), w);
+		return(actW ? actW->obtCosto() : C());
+	}else{
+		return(C());
+	}
+}
+
+template <class T, class C>
 bool Grafo<T,C>::esFuente(const T &v) const{
 	NodoV<T,C> *actV = this->g;
 	NodoA<T,C> *actA;
+	bool flag = false;
 	while(actV){
 		actA = actV->obtPri();
 		while(actA){
@@ -142,7 +212,7 @@ bool Grafo<T,C>::esFuente(const T &v) const{
 		}
 		actV = actV->obtSig();
 	}
-	return(true);
+	return(flag);
 }
 
 template <class T, class C>
@@ -187,10 +257,11 @@ void Grafo<T,C>::mostrar(std::ostream &o) const{
 	bool flag = false;
 	std::cout << std::setfill(' ');	//setting fill character for output stream.
 	while(act){
-		std::cout << act->obtInfo() << " ----> ";
+		std::cout << act->obtInfo() << "(" << act->obtId() << ")" << " ----> ";
 		c1.encolar(act->obtPri());
-		if(!flag)
+		if(!flag){
 			flag = act->obtPri() ? true : false;
+		}
 		act = act->obtSig();
 	}
 	std::cout << std::endl;
@@ -204,16 +275,16 @@ void Grafo<T,C>::mostrar(std::ostream &o) const{
 				std::cout << "|";
 				if(costoAux != 0){
 					std::cout << "(";
-					std::cout << std::setw(3) << std::setprecision(2);
+					std::cout << std::setw(6) << std::setprecision(2);
 					std::cout << std::left << costoAux;
 					std::cout << ")  ";
 				}else{
-					std::cout << std::setw(7) << std::setprecision(2);
+					std::cout << std::setw(10) << std::setprecision(2);
 					std::cout << " ";
 				}
 				flag = true;
 			}else{
-				std::cout << std::setw(8) << " ";
+				std::cout << std::setw(11) << " ";
 			}
 			c2.encolar(aux);
 		}
@@ -222,12 +293,12 @@ void Grafo<T,C>::mostrar(std::ostream &o) const{
 			aux = c2.frente();
 			c2.desencolar();
 			if(aux){
-				std::cout << std::setw(8) << std::setprecision(2);
+				std::cout << std::setw(11) << std::setprecision(2);
 				std:: cout << std::left;
 				std::cout << aux->obtVert()->obtInfo();
 				aux = aux->obtSig();
 			}else{
-				std::cout << std::setw(8) << " ";
+				std::cout << std::setw(11) << " ";
 			}
 			c1.encolar(aux);
 		}
@@ -303,10 +374,10 @@ int Grafo<T,C>::grado(const T &v) const{
 }
 
 template <class T, class C>
-bool Grafo<T,C>::adyacentes(const T &v, const T &w){
+bool Grafo<T,C>::adyacentes(const T &v, const T &w) const{
 	NodoV<T,C> *actV, *actW;
 	NodoA<T,C> *actA;
-	ubicarAmbos(v, w, actV, actW);
+	ubicarAmbos(v, w, actV, actW);	
 	if(actV && actW){
 		actA = actV->obtPri();
 		while(actA){
@@ -318,6 +389,31 @@ bool Grafo<T,C>::adyacentes(const T &v, const T &w){
 		actA = actW->obtPri();
 		while(actA){
 			if(actA->obtVert()->obtInfo() == v){
+
+				return(true);
+			}
+			actA = actA->obtSig();
+		}
+	}
+	return(false);
+}
+
+template <class T, class C>
+bool Grafo<T,C>::adyacentesPorId(const T &v, const T &w) const{
+	NodoV<T,C> *actV, *actW;
+	NodoA<T,C> *actA;
+	ubicarAmbos(v, w, actV, actW);	
+	if(actV && actW){
+		actA = actV->obtPri();
+		while(actA){
+			if(actA->obtVert()->obtId() == w){
+				return(true);
+			}
+			actA = actA->obtSig();
+		}
+		actA = actW->obtPri();
+		while(actA){
+			if(actA->obtVert()->obtId() == v){
 				return(true);
 			}
 			actA = actA->obtSig();
@@ -347,6 +443,22 @@ Lista<T> Grafo<T,C>::sucesores(const T &v) const{
 		actA = actV->obtPri();
 		while(actA){
 			l.insertar(actA->obtVert()->obtInfo(), l.longitud() + 1);
+			actA = actA->obtSig();
+		}
+	}
+	return(l);
+}
+
+template <class T, class C>
+Lista<int> Grafo<T,C>::sucesoresPorId(int v) const{
+	NodoV<T,C> *actV = this->g;
+	NodoA<T,C> *actA;
+	Lista<int> l;
+	actV = this->ubicarPorId(v);
+	if(actV){
+		actA = actV->obtPri();
+		while(actA){
+			l.insertar(actA->obtVert()->obtId(), l.longitud() + 1);
 			actA = actA->obtSig();
 		}
 	}
@@ -435,8 +547,12 @@ Lista<T> Grafo<T,C>::vecindad(const T &v) const{
 
 template <class T, class C>
 Lista<T> Grafo<T,C>::camino(const T &v, const T &w) const{
-	Lista<T> res, q, sucesores;
-	T u, k;
+	Lista<int> q, sucesores;
+	Lista<T> res;
+	int u, k, vi, vf;
+	T* nameArr = obtNombres();
+	vi = obtId(v);
+	vf = obtId(w);
 	if(arcos == 0){
 		return(res);
 	}
@@ -449,25 +565,26 @@ Lista<T> Grafo<T,C>::camino(const T &v, const T &w) const{
 		predecesor[i] = -1;
 		q.insertar(i , q.longitud() + 1);
 	}
-	distancia[v-1] = 0;
+	distancia[vi] = 0;
 	while(!q.esVacia()){
 		u = distanciaMin(q, distancia);
-		if(u + 1 == w){
+		if(u == vf){
 			while(true){
-				res.insertar(u + 1, 1);
-				if(u + 1 == v){
+				res.insertar(nameArr[u], 1);
+				if(u == vi){
 					return(res);
 				}
-				u = predecesor[u] - 1;
+				u = predecesor[u];
 			}
 		}
-		sucesores = this->sucesores(u + 1);		
+		visitados[u] = true;
+		sucesores = this->sucesoresPorId(u);
 		while(!sucesores.esVacia()){
-			k = sucesores.consultar(1) - 1;
+			k = sucesores.consultar(1);
 			sucesores.eliminar(1);
-			if(distancia[u] < distancia[k]){
-				distancia[k] = distancia[u] + 1;
-				predecesor[k] = u + 1;
+			if(!visitados[k] && distancia[u] + costoArcoPorId(u, k) < distancia[k]){
+				distancia[k] = distancia[u] + (int)costoArcoPorId(u, k);
+				predecesor[k] = u;
 			}
 			
 		}
@@ -478,13 +595,14 @@ Lista<T> Grafo<T,C>::camino(const T &v, const T &w) const{
 	//~ for(int i = 0; i < vertices; i++){
 		//~ cout << "pred[ " << i+1 << "] = " << predecesor[i] << endl;
 	//~ }
+	delete[] nameArr;
 	return(res);
 }
 
 template <class T, class C>
-T Grafo<T,C>::distanciaMin(Lista<T> &l, int *dist) const{
+int Grafo<T,C>::distanciaMin(Lista<int> &l, int *dist) const{
 	int tam = l.longitud();
-	T min = 0, aux;
+	int min = 0, aux;
 	int minVar = std::numeric_limits<int>::max();
 	for(int i = 0; i < tam; i++){
 		aux = l.consultar(i+1);
@@ -532,59 +650,79 @@ bool Grafo<T,C>::igual(const Grafo<T,C> &g2) const{
 template <class T, class C>
 bool Grafo<T,C>::obtMarca(const T &v) const{
 	NodoV<T,C> *actV = this->ubicar(v);
-	if(actV){
-		return(actV->obtMarca());
-	}else{
-		return(false);
-	}
+	return(actV ? actV->obtMarca : false);
 }
 
 template <class T, class C>
-void Grafo<T,C>::BFS(const T &s, T *dist, T *pred){
-	Lista<T> l;
-	Cola<T> c;
+int Grafo<T,C>::obtId(const T &v) const{
+	NodoV<T,C> *actV = this->ubicar(v);
+	return(actV->obtId());
+}
+
+template <class T, class C>
+T* Grafo<T,C>::obtNombres() const{
+	NodoV<T,C> *actV = g;
+	T* arr = new T[vertices];
+	int i = 0;
+	while(actV){
+		arr[i++] = actV->obtInfo();
+		actV = actV->obtSig();
+	}
+	return arr;
+}
+
+template <class T, class C>
+void Grafo<T,C>::BFS(int s, int *dist, int *pred){
+	Lista<int> l;
+	Cola<int> c;
+	T* nameArr = obtNombres();
 	std::string *color = new std::string[this->vertices];
-	T u, v;
+	int u, v;
 	for(int i = 0; i < this->vertices; i++){
 		dist[i] = std::numeric_limits<int>::max();
 		color[i] = "blanco";
 		pred[i] = 0;
 	}
-	color[s-1] = "gris";
-	dist[s-1] = 0;
+	color[s] = "gris";
+	dist[s] = 0;
+	pred[s] = -1;
 	c.encolar(s);
 	while(!c.esVacia()){
 		u = c.frente();
 		c.desencolar();
-		l = this->sucesores(u);
+		l = this->sucesoresPorId(u);
 		while(!l.esVacia()){
 			v = l.consultar(1);
 			l.eliminar(1);
-			if(color[v-1] == "blanco"){
-				color[v-1] = "gris";
-				dist[v-1] = dist[u-1] + 1;
-				pred[v-1] = u;
+			if(color[v] == "blanco"){
+				color[v] = "gris";
+				dist[v] = dist[u] + 1;
+				pred[v] = u;
 				c.encolar(v);
 			}
 		}
-		color[u-1] = "negro";
+		color[u] = "negro";
 	}
-	for(int i = 0; i < vertices; i++){
-		std::cout << "dist[" << i+1 << "] = " << dist[i] << std::endl;
-		std::cout << "pred[" << i+1 << "] = " << pred[i] << std::endl;
-		std::cout << "color[" << i+1 << "] = " << color[i] << std::endl;
-		std::cout << "---------------------------" << std::endl;
+	if(verbose){
+		for(int i = 0; i < vertices; i++){
+			std::cout << "dist[" << nameArr[i] << "] = " << dist[i] << std::endl;
+			std::cout << "pred[" << nameArr[i] << "] = " << nameArr[pred[i]] << std::endl;
+			std::cout << "color[" << nameArr[i] << "] = " << color[i] << std::endl;
+			std::cout << "---------------------------" << std::endl;
+		}
 	}
 	delete[] color;
+	delete[] nameArr;
 }
 
 template <class T, class C>
 void Grafo<T,C>::BFS(const T &v){
 	int tam = this->vertices;
 	if(tam > 0){
-		T *dist = new T[tam];
-		T *pred = new T[tam];
-		this->BFS(v, dist, pred);
+		modIds();
+		int *dist = new int[tam];
+		int *pred = new int[tam];
+		BFS(obtId(v), dist, pred);
 		delete[] dist;
 		delete[] pred;
 	}
@@ -594,6 +732,8 @@ template <class T, class C>
 void Grafo<T,C>::DFS(){
 	Lista<T> l = this->listaVertices();
 	T s;
+	T* nameArr = obtNombres();
+	int v;
 	std::string *color = new std::string[vertices];
 	int *tdesc = new int[vertices];
 	int *pred = new int[vertices];
@@ -606,54 +746,53 @@ void Grafo<T,C>::DFS(){
 	while(!l.esVacia()){
 		s = l.consultar(1);
 		l.eliminar(1);
-		if(color[s-1] == "blanco"){
-			this->DFS(s, pred, tdesc, tfinal, color, tiempo);
+		v = obtId(s);
+		if(color[v] == "blanco"){
+			this->DFS(v, pred, tdesc, tfinal, color, tiempo);
 		}
 	}
-	for(int i = 0; i < vertices; i++){
-		std::cout << "pred[" << i+1 << "] = " << pred[i] << std::endl;
-		std::cout << "tfinal[" << i+1 << "] = " << tfinal[i] << std::endl;
-		std::cout << "tdesc[" << i+1 << "] = " << tdesc[i] << std::endl;
-		std::cout << "color[" << i+1 << "] = " << color[i] << std::endl;
-		std::cout << "---------------------------" << std::endl;
+	if(verbose){
+		for(int i = 0; i < vertices; i++){
+			std::cout << "pred[" << nameArr[i] << "] = " << nameArr[pred[i]] << std::endl;
+			std::cout << "tfinal[" << nameArr[i] << "] = " << tfinal[i] << std::endl;
+			std::cout << "tdesc[" << nameArr[i] << "] = " << tdesc[i] << std::endl;
+			std::cout << "color[" << nameArr[i] << "] = " << color[i] << std::endl;
+			std::cout << "---------------------------" << std::endl;
+		}
 	}
 	delete[] color;
 	delete[] tdesc;
 	delete[] pred;
+	delete[] nameArr;
 	delete[] tfinal;
 }
 
 //Se resta 1 a v para indice en vector de 0 hasta instancia.orden()-1
 template <class T, class C>
-void Grafo<T,C>::DFS(const T v, T *pred, T *tdesc, T *tfinal, std::string *color, int &tiempo){
-	Lista<T> sucesores;
-	T u;
+void Grafo<T,C>::DFS(int v, int *pred, int *tdesc, int *tfinal, std::string *color, int &tiempo){
+	Lista<int> sucesores;
+	int u;
 	tiempo += 1;
-	tdesc[v-1] = tiempo;
-	color[v-1] = "gris";
-	sucesores = this->sucesores(v);
+	tdesc[v] = tiempo;
+	color[v] = "gris";
+	sucesores = this->sucesoresPorId(v);
 	while(!sucesores.esVacia()){
 		u = sucesores.consultar(1);
 		sucesores.eliminar(1);
-		if(color[u-1] == "blanco"){
-			pred[u-1] = v;
+		if(color[u] == "blanco"){
+			pred[u] = v;
 			this->DFS(u, pred, tdesc, tfinal, color, tiempo);
 		}
 	}
-	color[v-1] = "negro";
+	color[v] = "negro";
 	tiempo += 1;
-	tfinal[v-1] = tiempo;
-}
-
-template <class T, class C>
-bool Grafo<T,C>::esArborescencia(){
-	return(false);
+	tfinal[v] = tiempo;
 }
 
 //Esta funcion busca los nodos que contienen a los vertices v y w
 //y guarda apuntadores a ellos por referencia
 template <class T, class C>
-void Grafo<T,C>::ubicarAmbos(const T &v, const T &w, NodoV<T,C> *&actV, NodoV<T,C> *&actW){
+void Grafo<T,C>::ubicarAmbos(const T &v, const T &w, NodoV<T,C> *&actV, NodoV<T,C> *&actW) const{
 	NodoV<T,C> *act = g;
 	actV = actW = 0;
 	while(act && (!actV || !actW)){
@@ -682,10 +821,34 @@ NodoV<T,C>* Grafo<T,C>::ubicar(const T &v) const{
 }
 
 template <class T, class C>
+NodoV<T,C>* Grafo<T,C>::ubicarPorId(int v) const{
+	NodoV<T,C> *act = g;
+	while(act){
+		if(act->obtId() == v){
+			return(act);
+		}
+		act = act->obtSig();
+	}
+	return(0);
+}
+
+template <class T, class C>
 NodoA<T,C>* Grafo<T,C>::ubicar(NodoA<T,C> *actW, const T &w) const{
 	NodoA<T,C> *act = actW;
 	while(act){
 		if(act->obtVert()->obtInfo() == w){
+			return(act);
+		}
+		act = act->obtSig();
+	}
+	return(0);
+}
+
+template <class T, class C>
+NodoA<T,C>* Grafo<T,C>::ubicarPorId(NodoA<T,C> *actW, int w) const{
+	NodoA<T,C> *act = actW;
+	while(act){
+		if(act->obtVert()->obtId() == w){
 			return(act);
 		}
 		act = act->obtSig();
@@ -890,6 +1053,17 @@ void Grafo<T,C>::copiar(const Grafo<T,C> &g2){
 	this->vertices = g2.vertices;
 	this->arcos = g2.arcos;
 }
+
+template <class T, class C>
+void Grafo<T,C>::modIds(){
+	NodoV<T,C> *act = this->g;
+	int i = 0;
+	while(act){
+		act->modId(i++);
+		act = act->obtSig();
+	}
+}
+
 
 template <class T, class C>
 void Grafo<T,C>::copiarVertices(const Grafo<T,C> &g2){

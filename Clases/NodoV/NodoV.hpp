@@ -12,6 +12,7 @@ private:
 	NodoV<T,C> *sig;
 	NodoA<T,C> *pri;
 	T info;
+	int id;
 	bool marca;
 	
 public:
@@ -25,12 +26,14 @@ public:
 	//~ inline NodoV<T,C>*& obtSig(){ return(sig); }
 	//~ inline NodoA<T,C>*& obtPri(){ return(pri); }
 	inline T obtInfo() const{ return(info); }
+	inline int obtId() const{ return(id); }
 	inline bool obtMarca() const{ return(marca); }
 	
 	//Modificadores
 	inline void modSig(NodoV<T,C> *s){ sig = s; }
 	inline void modPri(NodoA<T,C> *a){ pri = a; }
 	inline void modInfo(T e){ info = e; }
+	inline void modId(int n){ id = n; }
 	inline void marcar(){ marca = true; }
 	inline void desmarcar(){ marca = false; }
 };
