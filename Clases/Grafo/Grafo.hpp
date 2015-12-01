@@ -22,6 +22,7 @@ protected:
 
 protected:
 	//Metodos Auxiliares
+	bool esEuleriano(T, Grafo<T,C>&) const;
 	bool esHamiltoniano(int, bool*, Lista<int>&) const;
 	NodoV<T,C>* agregarAlFinal(const T&);
 	void eliminarTodosArcos(NodoV<T,C>*);
@@ -42,6 +43,7 @@ public:
 	inline Grafo(const Grafo<T,C> &g2): g(0), fin(0){ *this = g2; }
 	
 	//Observadores
+	bool esEuleriano() const;
 	bool esHamiltoniano() const;
 	inline bool esVacio() const{ return(!g); }
 	inline int orden() const{ return(vertices); }
@@ -107,23 +109,57 @@ public:
 
 /**Observadores**/
 template <class T, class C>
+bool Grafo<T,C>::esEuleriano() const{
+	Grafo<T,C> g2;
+	Lista<T> l = this->listaVertices();
+	T v;
+	while(!l.esVacia()){
+		g2 = *this;
+		v = l.consultar(1);
+		l.eliminar(1);
+		if(esEuleriano(v, g2)){
+			return(true);
+		}
+	}
+	return(false);
+}
+
+template <class T, class C>
+bool Grafo<T,C>::esEuleriano(T v, Grafo<T,C> &g2) const{
+	Lista<T> verticesIngresar, s = g2.sucesores(v);
+	T u;
+	while(!s.esVacia()){
+		u = s.consultar(1);
+		s.eliminar(1);
+		g2.eliminarArco(v, u);
+		verticesIngresar.insertar(u, verticesIngresar.longitud() + 1);
+		esEuleriano(u, g2);
+	}
+	if(g2.nArcos() == 0){
+		return(true);
+	}
+	while(!verticesIngresar.esVacia()){
+		g2.agregarArco(v, verticesIngresar.consultar(1));
+		verticesIngresar.eliminar(1);
+	}
+	return(false);
+}
+
+template <class T, class C>
 bool Grafo<T,C>::esHamiltoniano() const{
 	Lista<T> l = listaVertices();
 	Lista<int> recorrido;
 	int v;
-	bool* visitados = new bool[vertices];
+	bool *visitados = new bool[vertices];
 	for(int i = 0; i < vertices; i++){
 		visitados[i] = false;
 	}
 	while(!l.esVacia()){
 		v = obtId(l.consultar(1));
 		l.eliminar(1);
-		if(!visitados[v]){
-			if(esHamiltoniano(v, visitados, recorrido)){
-				return(true);
-			}
+		if(esHamiltoniano(v, visitados, recorrido)){
+			return(true);
 		}
-		std::cout << recorrido << std::endl;
 		recorrido.nulo();
 	}
 	return(false);
@@ -549,13 +585,14 @@ template <class T, class C>
 Lista<T> Grafo<T,C>::camino(const T &v, const T &w) const{
 	Lista<int> q, sucesores;
 	Lista<T> res;
+	if(arcos == 0 || !existeVertice(v) || !existeVertice(w)){
+		return(res);
+	}
+	bool flag;
 	int u, k, vi, vf;
 	T* nameArr = obtNombres();
 	vi = obtId(v);
 	vf = obtId(w);
-	if(arcos == 0){
-		return(res);
-	}
 	bool *visitados = new bool[vertices];
 	int *distancia = new int[vertices];
 	int *predecesor = new int[vertices];
@@ -578,6 +615,7 @@ Lista<T> Grafo<T,C>::camino(const T &v, const T &w) const{
 			}
 		}
 		visitados[u] = true;
+		flag = false;
 		sucesores = this->sucesoresPorId(u);
 		while(!sucesores.esVacia()){
 			k = sucesores.consultar(1);
@@ -586,7 +624,10 @@ Lista<T> Grafo<T,C>::camino(const T &v, const T &w) const{
 				distancia[k] = distancia[u] + (int)costoArcoPorId(u, k);
 				predecesor[k] = u;
 			}
-			
+			flag = true;
+		}
+		if(sucesores.esVacia() && !flag){
+			return(res);
 		}
 	}
 	//~ for(int i = 0; i < vertices; i++){

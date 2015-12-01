@@ -23,6 +23,7 @@ int main(){
 		cin >> costo;
 		g.agregarArco(vertice1, vertice2, costo);
 	}
+	g.agregarVertice("ciudad3");
 	g.modIds();
 
 	if(g.esVacio()) cout << "Grafo 1 vacio" << endl;
@@ -64,7 +65,7 @@ int main(){
 	}
 	
 	v = "ciudad1";
-	string w = "ciudad5";
+	string w = "ciudad4";
 	
 	if(g.existeVertice(v)) cout << "El vertice " << v << " esta en el arco" << endl;
 	else cout << "El vertice " << v << " no esta en el arco" << endl;
@@ -86,7 +87,11 @@ int main(){
 	if(g.esHamiltoniano()) cout << "El grafo es hamiltoniano" << endl;
 	else cout << "El grafo no es hamiltoniano" << endl;
 
-	cout << "Camino mas corto entre " << v << " y " << w << "(Grafo 1):\n" << g.camino(v, w) << endl << endl;
+	if(g.esEuleriano()) cout << "El grafo es euleriano" << endl;
+	else cout << "El grafo no es euleriano" << endl;
+
+	cout << "Camino mas corto entre " << v << " y " << w;
+	cout << "(Grafo 1):\n" << g.camino(v, w) << endl << endl;
 	// cout << "Camino mas corto entre " << v << " y " << w << "(Grafo 2):\n" << g2.camino(v, w) << endl;
 	//~ Lista<int> caca = ordenamientoTopologico(g);
 	//~ cout << "Ordenamiento Topologico del grafo: \n" << caca << endl;

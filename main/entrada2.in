@@ -1,9 +1,5 @@
 ciudad1 ciudad2 1
-ciudad1 ciudad3 1
+ciudad2 ciudad1 1
 ciudad1 ciudad4 1
-ciudad2 ciudad5 6
-ciudad3 ciudad6 4
-ciudad4 ciudad6 5
-ciudad6 ciudad5 1
-ciudad4 ciudad7 1
-ciudad7 ciudad6 1
+ciudad3 ciudad2 1
+ciudad3 ciudad4 1
