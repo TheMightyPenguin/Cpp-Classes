@@ -138,10 +138,10 @@ bool Grafo<T,C>::esEuleriano(T v, Grafo<T,C> &g2) const{
 	if(g2.nArcos() == 0){
 		return(true);
 	}
-	while(!verticesIngresar.esVacia()){
-		g2.agregarArco(v, verticesIngresar.consultar(1));
-		verticesIngresar.eliminar(1);
-	}
+	// while(!verticesIngresar.esVacia()){
+	// 	g2.agregarArco(v, verticesIngresar.consultar(1));
+	// 	verticesIngresar.eliminar(1);
+	// }
 	return(false);
 }
 
