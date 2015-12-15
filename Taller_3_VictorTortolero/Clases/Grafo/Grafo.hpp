@@ -748,7 +748,7 @@ void Grafo<T,C>::BFS(int s, int *dist, int *pred){
 	if(verbose){
 		for(int i = 0; i < vertices; i++){
 			std::cout << "dist[" << nameArr[i] << "] = " << dist[i] << std::endl;
-			std::cout << "pred[" << nameArr[i] << "] = " << (pred[i] != -1 ? nameArr[pred[i]] : "Vertice inicial") << std::endl;
+			std::cout << "pred[" << nameArr[i] << "] = " << nameArr[pred[i]] << std::endl;
 			std::cout << "color[" << nameArr[i] << "] = " << color[i] << std::endl;
 			std::cout << "---------------------------" << std::endl;
 		}

@@ -1,0 +1,37 @@
+5
+A B
+B C
+C D
+D E
+D F
+D G
+E F
+G H
+A G
+F A
+* *
+
+A C
+C F
+F H
+A H
+* *
+
+A B
+* *
+
+A B
+A C
+C B
+C H
+B F
+* *
+
+A B
+A C
+C B
+C H
+B F
+H K
+K F
+* *

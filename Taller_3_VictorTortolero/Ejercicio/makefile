@@ -2,14 +2,14 @@
 
 #Variables
 CC = g++
-NAME = main2
+NAME = arbolDfs
 
 #Instrucciones
 all:
 	$(CC) $(NAME).cpp -o $(NAME)
 	
 run:
-	./$(NAME) < entrada2.in
+	$(NAME).exe < entrada.in
 
 clean:
 	rm $(NAME)

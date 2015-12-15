@@ -9,7 +9,7 @@ all:
 	$(CC) $(NAME).cpp -o $(NAME)
 	
 run:
-	./$(NAME) < entrada2.in
+	$(NAME).exe < entrada2.in
 
 clean:
 	rm $(NAME)
